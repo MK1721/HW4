@@ -1,0 +1,355 @@
+openapi: 3.0.0
+info:
+  title: Steam User Inventory API
+  description: API for managing user inventories on Steam. Provides CRUD operations for inventory items.
+  version: "1.0.0"
+host: 'steamcommunity.com'
+basePath: '/inventory'
+schemes:
+  - https
+securityDefinitions:
+  ApiKeyAuth:
+    type: apiKey
+    in: query
+    name: key
+security:
+  - ApiKeyAuth: []
+paths:
+  /{user_id}/{app_id}/{context_id}:
+    get:
+      summary: Retrieve user inventory
+      description: Returns a list of all items in the user's inventory for a specific app and context.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: '76561198006409530'
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 730
+        - name: context_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 2
+      responses:
+        '200':
+          description: Successfully retrieved the inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+              examples:
+                inventory:
+                  summary: A sample inventory response
+                  value:
+                    success: 1
+                    assets:
+                      - appid: 730
+                        contextid: "2"
+                        assetid: "8383838383"
+                        classid: "123456"
+                        instanceid: "0"
+                        amount: "1"
+                    descriptions:
+                      - appid: 730
+                        classid: "123456"
+                        instanceid: "0"
+                        icon_url: "URL_TO_ICON"
+                        market_hash_name: "AK-47 | Redline (Field-Tested)"
+                        type: "Rifle"
+                        tradable: 1
+                        marketable: 1
+                    total_inventory_count: 1
+                    more_items: false
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+              examples:
+                unauthorized:
+                  summary: An unauthorized error response
+                  value:
+                    error: "Unauthorized access. Please provide a valid API key."
+        '404':
+          description: Inventory not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                notFound:
+                  summary: An inventory not found error response
+                  value:
+                    error: "Inventory not found. Please check the user ID, app ID, and context ID."
+    post:
+      summary: Add an item to the inventory
+      description: Adds a new item to the user's inventory
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: context_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        '201':
+          description: Item successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '401':
+          description: Unauthorized user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+    put:
+      summary: Update an inventory item
+      description: Updates information about an item in the user's inventory
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: context_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: item_id
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        '200':
+          description: Item successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '401':
+          description: Unauthorized user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+    delete:
+      summary: Delete an inventory item
+      description: Deletes an item from the user's inventory
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: context_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: item_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The item ID
+        name:
+          type: string
+          description: The item name
+        description:
+          type: string
+          description: The item description
+        quantity:
+          type: integer
+          description: The quantity of items
+      example:
+        id: "8383838383"
+        name: "AK-47 | Redline (Field-Tested)"
+        description: "A popular rifle with a sleek redline design."
+        quantity: 1
+    Asset:
+      type: object
+      properties:
+        appid:
+          type: integer
+          description: The application ID
+        contextid:
+          type: string
+          description: The context ID
+        assetid:
+          type: string
+          description: The asset ID
+        classid:
+          type: string
+          description: The class ID
+        instanceid:
+          type: string
+          description: The instance ID
+        amount:
+          type: string
+          description: The amount of items
+      example:
+        appid: 730
+        contextid: "2"
+        assetid: "8383838383"
+        classid: "123456"
+        instanceid: "0"
+        amount: "1"
+    Description:
+      type: object
+      properties:
+        appid:
+          type: integer
+          description: The application ID
+        classid:
+          type: string
+          description: The class ID
+        instanceid:
+          type: string
+          description: The instance ID
+        icon_url:
+          type: string
+          description: The URL to the item's icon
+        market_hash_name:
+          type: string
+          description: The market hash name of the item
+        type:
+          type: string
+          description: The type of the item
+        tradable:
+          type: integer
+          description: Whether the item is tradable (1 for yes, 0 for no)
+        marketable:
+          type: integer
+          description: Whether the item is marketable (1 for yes, 0 for no)
+      example:
+        appid: 730
+        classid: "123456"
+        instanceid: "0"
+        icon_url: "URL_TO_ICON"
+        market_hash_name: "AK-47 | Redline (Field-Tested)"
+        type: "Rifle"
+        tradable: 1
+        marketable: 1
+    InventoryResponse:
+      type: object
+      properties:
+        success:
+          type: integer
+          description: The success status of the request
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        descriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Description'
+        total_inventory_count:
+          type: integer
+          description: The total number of items in the inventory
+        more_items:
+          type: boolean
+          description: Whether there are more items to load
+      example:
+        success: 1
+        assets:
+          - appid: 730
+            contextid: "2"
+            assetid: "8383838383"
+            classid: "123456"
+            instanceid: "0"
+            amount: "1"
+        descriptions:
+          - appid: 730
+            classid: "123456"
+            instanceid: "0"
+            icon_url: "URL_TO_ICON"
+            market_hash_name: "AK-47 | Redline (Field-Tested)"
+            type: "Rifle"
+            tradable: 1
+            marketable: 1
+        total_inventory_count: 1
+        more_items: false
+    UnauthorizedError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: The error message
+      example:
+        error: "Unauthorized access. Please provide a valid API key."
+    NotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: The error message
+      example:
+        error: "Inventory not found. Please check the user ID, app ID, and context ID."
