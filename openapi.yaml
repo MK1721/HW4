@@ -1,0 +1,237 @@
+openapi: 3.0.0
+info:
+  title: Steam Achievements API
+  description: API for accessing and managing Steam achievements.
+  version: "1.0.0"
+servers:
+  - url: 'https://api.steampowered.com'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: query
+      name: key
+  schemas:
+    Achievement:
+      type: object
+      properties:
+        apiname:
+          type: string
+          description: The API name of the achievement
+        achieved:
+          type: integer
+          description: Indicates if the achievement is unlocked (1) or not (0)
+        unlocktime:
+          type: integer
+          description: The Unix timestamp when the achievement was unlocked
+      example:
+        apiname: "WIN_GAME"
+        achieved: 1
+        unlocktime: 1625264842
+    AchievementsResponse:
+      type: object
+      properties:
+        playerstats:
+          type: object
+          properties:
+            steamID:
+              type: string
+              description: The Steam ID of the player
+            gameName:
+              type: string
+              description: The name of the game
+            achievements:
+              type: array
+              items:
+                $ref: '#/components/schemas/Achievement'
+      example:
+        playerstats:
+          steamID: "76561198006409530"
+          gameName: "Game Title"
+          achievements:
+            - apiname: "WIN_GAME"
+              achieved: 1
+              unlocktime: 1625264842
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: The error message
+      example:
+        error: "Invalid API key."
+paths:
+  /ISteamUserStats/GetPlayerAchievements/v1:
+    get:
+      summary: Retrieve user's achievements for a game
+      description: Returns the achievements for a specific user in a specific game.
+      parameters:
+        - name: steamid
+          in: query
+          required: true
+          schema:
+            type: string
+          example: '76561198006409530'
+        - name: appid
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 440
+        - name: l
+          in: query
+          required: false
+          schema:
+            type: string
+          example: 'en'
+      responses:
+        '200':
+          description: Successfully retrieved achievements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementsResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Achievements not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2:
+    get:
+      summary: Retrieve global achievement percentages for a game
+      description: Returns the global achievement percentages for a specific game.
+      parameters:
+        - name: gameid
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 440
+      responses:
+        '200':
+          description: Successfully retrieved global achievement percentages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievementpercentages:
+                    type: object
+                    properties:
+                      achievements:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: The name of the achievement
+                            percent:
+                              type: number
+                              description: The percentage of players who have unlocked the achievement
+              example:
+                achievementpercentages:
+                  achievements:
+                    - name: "WIN_GAME"
+                      percent: 55.5
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Achievements not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /ISteamUserStats/GetSchemaForGame/v2:
+    get:
+      summary: Retrieve the achievement schema for a game
+      description: Returns the achievement schema for a specific game, which includes metadata about the achievements.
+      parameters:
+        - name: appid
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 440
+      responses:
+        '200':
+          description: Successfully retrieved the achievement schema
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  game:
+                    type: object
+                    properties:
+                      gameName:
+                        type: string
+                        description: The name of the game
+                      gameVersion:
+                        type: string
+                        description: The version of the game
+                      availableGameStats:
+                        type: object
+                        properties:
+                          achievements:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  description: The API name of the achievement
+                                defaultvalue:
+                                  type: integer
+                                  description: The default value of the achievement
+                                displayName:
+                                  type: string
+                                  description: The display name of the achievement
+                                hidden:
+                                  type: integer
+                                  description: Indicates if the achievement is hidden
+                                description:
+                                  type: string
+                                  description: The description of the achievement
+                                icon:
+                                  type: string
+                                  description: The URL of the achievement icon
+                                icongray:
+                                  type: string
+                                  description: The URL of the gray achievement icon
+              example:
+                game:
+                  gameName: "Game Title"
+                  gameVersion: "1.0"
+                  availableGameStats:
+                    achievements:
+                      - name: "WIN_GAME"
+                        defaultvalue: 0
+                        displayName: "Win the Game"
+                        hidden: 0
+                        description: "Awarded for winning the game."
+                        icon: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/440/icon.jpg"
+                        icongray: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/440/icongray.jpg"
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Achievement schema not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
